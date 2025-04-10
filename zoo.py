@@ -14,6 +14,8 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 def get_device():
     if torch.cuda.is_available():
         return "cuda"
@@ -273,7 +275,10 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         # Prepare inputs for generation
         cache_position = torch.arange(0, len(imgs), device=self.device if self._using_gpu else "cpu")
         inputs = self.model.prepare_inputs_for_generation(
-            **inputs, cache_position=cache_position, use_cache=False)
+            **inputs, 
+            cache_position=cache_position, 
+            use_cache=False
+            )
         
         # Generate embeddings
         with torch.no_grad():
