@@ -1,0 +1,54 @@
+{
+    "name": "vdr-2b-v1",
+    "url": "https://github.com/harpreetsahota204/visual_document_retrieval",
+    "models": [
+        {
+            "base_name": "llamaindex/vdr-2b-v1",
+            "base_filename":"vdr-2b-v1",
+            "author": "LlamaIndex",
+            "license": "Apache-2.0 license",
+            "source": "https://huggingface.co/llamaindex/vdr-2b-v1",
+            "description": "vdr-2b-v1 is an english only embedding model designed for visual document retrieval. It encodes document page screenshots into dense single-vector representations, this will effectively allow to search and query visually rich multilingual documents without the need for any OCR, data extraction pipelines, and chunking.",
+            "tags": [
+                "embeddings",
+                "ocr",
+                "VLM",
+                "document-retrieval"
+            ],
+            "date_added": "2025-04-10",
+            "requirements": {
+                "packages": ["huggingface-hub","transformers", "torch", "torchvision", "qwen-vl-utils", "accelerate"],
+                "cpu": {
+                    "support": true
+                },
+                "gpu": {
+                    "support": true
+                }
+            }
+        },
+        {
+            "base_name": "llamaindex/vdr-2b-multi-v1",
+            "base_filename":"vdr-2b-multi-v1",
+            "author": "LlamaIndex",
+            "license": "Apache-2.0 license",
+            "source": "https://huggingface.co/llamaindex/vdr-2b-multi-v1",
+            "description": "vdr-2b-multi-v1 is a multilingual embedding model designed for visual document retrieval across multiple languages and domains. It encodes document page screenshots into dense single-vector representations, this will effectively allow to search and query visually rich multilingual documents without the need for any OCR, data extraction pipelines, and chunking. It's trained on 🇮🇹 Italian, 🇪🇸 Spanish, 🇬🇧 English, 🇫🇷 French and 🇩🇪 German",
+            "tags": [
+                "embeddings",
+                "ocr",
+                "VLM",
+                "document-retrieval"
+            ],
+            "date_added": "2025-04-01",
+            "requirements": {
+                "packages": ["huggingface-hub","transformers", "torch", "torchvision", "qwen-vl-utils", "accelerate", "autoawq==0.2.7.post3"],
+                "cpu": {
+                    "support": true
+                },
+                "gpu": {
+                    "support": true
+                }
+            }
+        }
+    ]
+}
