@@ -114,8 +114,8 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
             )
 
         # Set padding side
-        self._model.padding_side = "left"
-        self._processor.tokenizer.padding_side = "left"
+        self.model.padding_side = "left"
+        self.processor.tokenizer.padding_side = "left"
         
         # Store embedding dimension
         self.embedding_dim = config.embedding_dim
