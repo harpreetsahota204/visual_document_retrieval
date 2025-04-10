@@ -195,12 +195,12 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         
         # Prepare inputs for generation
         cache_position = torch.arange(0, len(prompts), device=self.device if self._using_gpu else "cpu")
-        inputs = self._model.prepare_inputs_for_generation(
+        inputs = self.model.prepare_inputs_for_generation(
             **inputs, cache_position=cache_position, use_cache=False)
         
         # Generate embeddings
         with torch.no_grad():
-            output = self._model(
+            output = self.model(
                 **inputs,
                 return_dict=True,
                 output_hidden_states=True
@@ -272,12 +272,12 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         
         # Prepare inputs for generation
         cache_position = torch.arange(0, len(imgs), device=self.device if self._using_gpu else "cpu")
-        inputs = self._model.prepare_inputs_for_generation(
+        inputs = self.model.prepare_inputs_for_generation(
             **inputs, cache_position=cache_position, use_cache=False)
         
         # Generate embeddings
         with torch.no_grad():
-            output = self._model(
+            output = self.model(
                 **inputs,
                 return_dict=True,
                 output_hidden_states=True
@@ -316,7 +316,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         )
         text_features = text_features / text_features.norm(dim=1, keepdim=True)
 
-        logit_scale = self._model.logit_scale.exp()
+        logit_scale = self.model.logit_scale.exp()
 
         logits_per_image = logit_scale * image_features @ text_features.t()
 
