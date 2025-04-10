@@ -4,8 +4,6 @@ import os
 from huggingface_hub import snapshot_download
 from fiftyone.operators import types
 
-# Import constants from zoo.py to ensure consistency
-from .zoo import QWEN_OPERATIONS, QwenModel
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +36,7 @@ def load_model(model_name, model_path, **kwargs):
         a :class:`fiftyone.core.models.Model`
     """
     # Import QwenModel from zoo.py
-    from .zoo import QwenModel
+    from .zoo import VDRModel
     
     if not model_path or not os.path.isdir(model_path):
         raise ValueError(
@@ -46,10 +44,10 @@ def load_model(model_name, model_path, **kwargs):
             "using fiftyone.zoo.download_zoo_model(...)"
         )
     
-    logger.info(f"Loading QwenModel model from {model_path}")
+    logger.info(f"Loading VDR model from {model_path}")
 
     # Create and return the model - operations specified at apply time
-    return QwenModel(model_path=model_path, **kwargs)
+    return VDRModel(model_path=model_path, **kwargs)
 
 
 def resolve_input(model_name, ctx):
