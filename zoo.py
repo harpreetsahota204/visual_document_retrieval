@@ -70,6 +70,16 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         self.document_prompt = config.document_prompt
         self.query_prompt = config.query_prompt
 
+    @property
+    def has_embeddings(self):
+        """Whether this instance can generate embeddings.
+
+        This method returns ``False`` by default. Methods that can generate
+        embeddings will override this via implementing the
+        :class:`EmbeddingsMixin` interface.
+        """
+        return True
+
     def _load_model(self, config):
         """Load the model from disk.
 
