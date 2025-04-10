@@ -1,2 +1,2 @@
-# vdr_plugin
-A FiftyOne Plugin for Visual Document Retrieval
+# Visual Document Retrieval
+A FiftyOne Remotely Sourced Model Zoo for Visual Document Retrieval
