@@ -4,6 +4,7 @@ import os
 from huggingface_hub import snapshot_download
 from fiftyone.operators import types
 
+from .zoo import VDRModel, VDRModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,6 @@ def download_model(model_name, model_path):
     """
     
     snapshot_download(repo_id=model_name, local_dir=model_path)
-
 
 def load_model(model_name, model_path, **kwargs):
     """Loads the model.
@@ -35,9 +35,7 @@ def load_model(model_name, model_path, **kwargs):
     Returns:
         a :class:`fiftyone.core.models.Model`
     """
-    # Import QwenModel from zoo.py
-    from .zoo import VDRModel
-    
+
     if not model_path or not os.path.isdir(model_path):
         raise ValueError(
             f"Invalid model_path: '{model_path}'. Please ensure the model has been downloaded "
@@ -46,8 +44,12 @@ def load_model(model_name, model_path, **kwargs):
     
     logger.info(f"Loading VDR model from {model_path}")
 
-    # Create and return the model - operations specified at apply time
-    return VDRModel(model_path=model_path, **kwargs)
+    config = VDRModelConfig(
+        dict(
+            model_path=model_path,
+        )
+    )
+    return VDRModel(config)
 
 
 def resolve_input(model_name, ctx):

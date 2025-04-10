@@ -39,8 +39,11 @@ class VDRModelConfig(fout.TorchImageModelConfig):
             d: a dictionary containing the configuration parameters
         """
         super().__init__(d)
-        self.text_prompt = self.parse_string(d, "text_prompt", default="A photo of")
+        self.model_path = self.parse_string(d, "model_path", default="llamaindex/vdr-2b-v1")
+        self.text_prompt = self.parse_string(d, "text_prompt", default="")
         self.embedding_dim = self.parse_int(d, "embedding_dim", default=2048)
+        self.document_prompt = self.parse_string(d, "document_prompt", default="<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>What is shown in this image?<|im_end|>\n<|endoftext|>")
+        self.query_prompt = self.parse_string(d, "query_prompt", default="<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Query: %s<|im_end|>\n<|endoftext|>")
 
 
 class VDRModel(fout.TorchImageModel, fom.PromptMixin):
@@ -55,7 +58,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         config: a :class:`VDRModelConfig`
     """
 
-    def __init__(self, config, model_path):
+    def __init__(self, config):
         """Initialize the model.
 
         Args:
@@ -64,8 +67,8 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         super().__init__(config)
 
         self._text_features = None
-        self.document_prompt = "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>What is shown in this image?<|im_end|>\n<|endoftext|>"
-        self.query_prompt = "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Query: %s<|im_end|>\n<|endoftext|>"
+        self.document_prompt = config.document_prompt
+        self.query_prompt = config.query_prompt
 
     def _load_model(self, config):
         """Load the model from disk.
@@ -82,7 +85,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
 
         # Load processor
         self._processor = AutoProcessor.from_pretrained(
-            self.model_path,
+            config.model_path,
             use_fast=True,
             size={
                 'shortest_edge': self.min_pixels,
@@ -92,11 +95,11 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         # Set dtype for CUDA devices
         self.torch_dtype = torch.bfloat16 if self.device in ["cuda", "mps"] else None
         # Load model and processor
-        logger.info(f"Loading model from {self.model_path}")
+        logger.info(f"Loading model from {config.model_path}")
 
         if self.torch_dtype:
             self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-                self.model_path,
+                config.model_path,
                 trust_remote_code=True,
                 # local_files_only=True,
                 device_map=self.device,
@@ -104,7 +107,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
             )
         else:
             self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-                self.model_path,
+                config.model_path,
                 trust_remote_code=True,
                 # local_files_only=True,
                 device_map=self.device,
