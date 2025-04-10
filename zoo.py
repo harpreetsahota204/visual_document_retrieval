@@ -251,31 +251,20 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         """
         return self.embed_prompts([prompt])[0]
 
-    def _get_text_features(self, query=None):
-        """Get text features for the query prompt.
-
-        Args:
-            query: Optional text query to embed. If None, uses stored text features.
+    def _get_text_features(self):
+        """Get text features using the default document prompt.
 
         Returns:
             torch.Tensor of text features
         """
         print(f"\n=== _get_text_features ===")
-        print(f"Input query: {query}")
         print(f"Current _text_features: {self._text_features}")
         
-        if query is not None:
-            # Generate text features for the specific query
-            print(f"Generating text features for query: {query}")
-            features = self._embed_prompts([query])
-            print(f"Generated features shape: {features.shape}")
-            return features
-        
         if self._text_features is None:
-            # If no query and no stored features, generate features for default prompt
-            print(f"No stored features found. Using default text prompt: {self.config.text_prompt}")
-            self._text_features = self._embed_prompts([self.config.text_prompt])
-            print(f"Generated default features shape: {self._text_features.shape}")
+            # Use the document prompt as our default text feature
+            print(f"No stored features found. Using document prompt")
+            self._text_features = self._embed_prompts([self.document_prompt])
+            print(f"Generated features shape: {self._text_features.shape}")
 
         return self._text_features
 
@@ -367,7 +356,6 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         """Run prediction on a batch of images."""
         print(f"\n=== _predict_all ===")
         print(f"Number of images: {len(imgs)}")
-        print(f"Using query: {self.query}")
         
         # Get image dimensions for output processing
         if isinstance(imgs[0], torch.Tensor):
@@ -383,9 +371,9 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         image_embeddings = torch.tensor(self.embed_images(imgs), device=self.device if self._using_gpu else "cpu")
         print(f"Image embeddings shape: {image_embeddings.shape}")
         
-        # Get text features for query
+        # Get text features
         print("Getting text features...")
-        text_features = self._get_text_features(self.query)  # Use self.query here
+        text_features = self._get_text_features()
         print(f"Text features shape: {text_features.shape}")
         
         # Calculate similarity scores
@@ -396,12 +384,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         # Process output
         if hasattr(self, 'has_logits') and self.has_logits:
             self._output_processor.store_logits = self.store_logits
-            print("Storing logits enabled")
         
-        print("Processing final output...")
-        result = self._output_processor(
+        return self._output_processor(
             output, frame_size, confidence_thresh=self.config.confidence_thresh
         )
-        print("Output processing complete")
-        
-        return result
