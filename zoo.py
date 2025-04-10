@@ -84,7 +84,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         self.min_pixels = 1 * 28 * 28
 
         # Load processor
-        self._processor = AutoProcessor.from_pretrained(
+        self.processor = AutoProcessor.from_pretrained(
             config.model_path,
             use_fast=True,
             size={
@@ -172,7 +172,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         formatted_prompts = [self.query_prompt % p for p in prompts]
         
         # Process inputs
-        inputs = self._processor(
+        inputs = self.processor(
             text=formatted_prompts,
             images=[dummy_image for _ in prompts],
             videos=None,
@@ -249,7 +249,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         resized_images = [self._resize_image(img) for img in imgs]
         
         # Process inputs
-        inputs = self._processor(
+        inputs = self.processor(
             text=[self.document_prompt] * len(imgs),
             images=resized_images,
             videos=None,
