@@ -46,6 +46,7 @@ class VDRModelConfig(fout.TorchImageModelConfig):
         self.embedding_dim = self.parse_int(d, "embedding_dim", default=2048)
         self.document_prompt = self.parse_string(d, "document_prompt", default="<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>What is shown in this image?<|im_end|>\n<|endoftext|>")
         self.query_prompt = self.parse_string(d, "query_prompt", default="<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Query: %s<|im_end|>\n<|endoftext|>")
+        self.query = self.parse_string(d, "query", default="What is shown in this image?")
 
 
 class VDRModel(fout.TorchImageModel, fom.PromptMixin):
@@ -66,11 +67,13 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         Args:
             config: a VDRModelConfig instance
         """
+        print("Initializing VDRModel...")
         super().__init__(config)
 
         self._text_features = None
         self.document_prompt = config.document_prompt
         self.query_prompt = config.query_prompt
+        print("VDRModel initialized")
 
     @property
     def has_embeddings(self):
@@ -82,6 +85,11 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         """
         return True
 
+    @property
+    def can_embed_prompts(self):
+        return True
+
+
     def _load_model(self, config):
         """Load the model from disk.
 
@@ -91,11 +99,13 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         Returns:
             loaded PyTorch model
         """
+        print(f"Loading model from path: {config.model_path}")
         # Define image resolution limits
         self.max_pixels = 768 * 28 * 28
         self.min_pixels = 1 * 28 * 28
 
         # Load processor
+        print("Loading processor...")
         self.processor = AutoProcessor.from_pretrained(
             config.model_path,
             use_fast=True,
@@ -104,11 +114,14 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
                 'longest_edge': self.max_pixels
                 }
             )
+        print("Processor loaded successfully")
+        
         # Set dtype for CUDA devices
         self.torch_dtype = torch.bfloat16 if self.device in ["cuda", "mps"] else None
         # Load model and processor
         logger.info(f"Loading model from {config.model_path}")
 
+        print(f"Loading model with dtype: {self.torch_dtype}")
         if self.torch_dtype:
             self.model = Qwen2VLForConditionalGeneration.from_pretrained(
                 config.model_path,
@@ -124,6 +137,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
                 # local_files_only=True,
                 device_map=self.device,
             )
+        print("Model loaded successfully")
 
         # Set padding side
         self.model.padding_side = "left"
@@ -131,6 +145,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         
         # Store embedding dimension
         self.embedding_dim = config.embedding_dim
+        print(f"Model initialization complete. Embedding dimension: {self.embedding_dim}")
 
     # Helper functions for image resizing
     def _round_by_factor(self, number, factor=28):
@@ -177,6 +192,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         Returns:
             torch.Tensor of text embeddings
         """
+        print(f"Embedding {len(prompts)} prompts...")
         # Create a dummy image for the text-only embedding
         dummy_image = Image.new('RGB', (56, 56))
         
@@ -210,6 +226,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         
         # Extract and normalize embeddings
         embeddings = output.hidden_states[-1][:, -1]
+        print("Prompt embedding complete")
         return F.normalize(embeddings[:, :self.embedding_dim], p=2, dim=-1)
 
     def embed_prompts(self, prompts):
@@ -234,17 +251,31 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         """
         return self.embed_prompts([prompt])[0]
 
-    def _get_text_features(self):
-        """Get text features for the configured classes.
+    def _get_text_features(self, query=None):
+        """Get text features for the query prompt.
+
+        Args:
+            query: Optional text query to embed. If None, uses stored text features.
 
         Returns:
             torch.Tensor of text features
         """
+        print(f"\n=== _get_text_features ===")
+        print(f"Input query: {query}")
+        print(f"Current _text_features: {self._text_features}")
+        
+        if query is not None:
+            # Generate text features for the specific query
+            print(f"Generating text features for query: {query}")
+            features = self._embed_prompts([query])
+            print(f"Generated features shape: {features.shape}")
+            return features
+        
         if self._text_features is None:
-            prompts = [
-                "%s %s" % (self.config.text_prompt, c) for c in self.classes
-            ]
-            self._text_features = self._embed_prompts(prompts)
+            # If no query and no stored features, generate features for default prompt
+            print(f"No stored features found. Using default text prompt: {self.config.text_prompt}")
+            self._text_features = self._embed_prompts([self.config.text_prompt])
+            print(f"Generated default features shape: {self._text_features.shape}")
 
         return self._text_features
 
@@ -257,8 +288,10 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         Returns:
             numpy array of embedded images
         """
+        print(f"Embedding {len(imgs)} images...")
         # Resize images
         resized_images = [self._resize_image(img) for img in imgs]
+        print("Images resized")
         
         # Process inputs
         inputs = self.processor(
@@ -291,6 +324,7 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         # Extract and normalize embeddings
         embeddings = output.hidden_states[-1][:, -1]
         normalized = F.normalize(embeddings[:, :self.embedding_dim], p=2, dim=-1)
+        print("Image embedding complete")
         
         return normalized.detach().cpu().numpy()
 
@@ -328,16 +362,13 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
         logits_per_text = logits_per_image.t()
         
         return logits_per_image, logits_per_text
-
+    
     def _predict_all(self, imgs):
-        """Run prediction on a batch of images.
-
-        Args:
-            imgs: list of images to process
-
-        Returns:
-            model predictions processed by the output processor
-        """
+        """Run prediction on a batch of images."""
+        print(f"\n=== _predict_all ===")
+        print(f"Number of images: {len(imgs)}")
+        print(f"Using query: {self.query}")
+        
         # Get image dimensions for output processing
         if isinstance(imgs[0], torch.Tensor):
             height, width = imgs[0].shape[-2:]
@@ -345,20 +376,32 @@ class VDRModel(fout.TorchImageModel, fom.PromptMixin):
             width, height = imgs[0].size
         
         frame_size = (width, height)
+        print(f"Frame size: {frame_size}")
         
         # Generate image embeddings
+        print("Generating image embeddings...")
         image_embeddings = torch.tensor(self.embed_images(imgs), device=self.device if self._using_gpu else "cpu")
+        print(f"Image embeddings shape: {image_embeddings.shape}")
         
-        # Get text features for classes
-        text_features = self._get_text_features()
+        # Get text features for query
+        print("Getting text features...")
+        text_features = self._get_text_features(self.query)  # Use self.query here
+        print(f"Text features shape: {text_features.shape}")
         
         # Calculate similarity scores
+        print("Calculating similarity scores...")
         output, _ = self._get_class_logits(text_features, image_embeddings)
+        print(f"Output logits shape: {output.shape}")
         
         # Process output
         if hasattr(self, 'has_logits') and self.has_logits:
             self._output_processor.store_logits = self.store_logits
+            print("Storing logits enabled")
         
-        return self._output_processor(
+        print("Processing final output...")
+        result = self._output_processor(
             output, frame_size, confidence_thresh=self.config.confidence_thresh
         )
+        print("Output processing complete")
+        
+        return result
