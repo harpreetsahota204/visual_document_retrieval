@@ -131,7 +131,7 @@ The model computes embeddings by:
    - Computing cosine similarity between normalized embeddings
    - Ranking results based on similarity scores
 
-## Ideal Use Cases and Limitations
+# Ideal Use Cases and Limitations
 
 ### Best For
 - **Document Images**: Excels with any kind of document containing text
@@ -154,3 +154,16 @@ This implementation is provided under the terms of the [base model's license (Ll
 - This implementation builds on the Qwen2VL model architecture
 - Integrated with FiftyOne for dataset exploration and management
 - Thanks to LlamaIndex for the VDR-2B model release
+
+# Citation
+
+```bibtext
+@misc{vdr2b2023,
+  author = {LlamaIndex},
+  title = {VDR-2B-v1: Vision-Document Retrieval Model},
+  year = {2025},
+  publisher = {Hugging Face},
+  howpublished = {\url{https://huggingface.co/llamaindex/vdr-2b-v1}},
+  note = {Accessed: 2025-04-15}
+}
+```
