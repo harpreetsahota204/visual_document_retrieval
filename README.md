@@ -113,7 +113,7 @@ model = foz.load_zoo_model(
 - **Platform Requirements**: CUDA-capable GPU recommended for optimal performance
 - **Memory Requirements**: Approximately 5GB GPU memory
 
-## How It Works
+# How It Works
 
 The model computes embeddings by:
 
@@ -158,7 +158,7 @@ This implementation is provided under the terms of the [base model's license (Ll
 # Citation
 
 ```bibtext
-@misc{vdr2b2023,
+@misc{vdr-2b-v1,
   author = {LlamaIndex},
   title = {VDR-2B-v1: Vision-Document Retrieval Model},
   year = {2025},
