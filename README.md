@@ -4,11 +4,10 @@ This repository provides a FiftyOne integration for the Vision-Document Retrieva
 
 ## Overview
 
-The Vision-Document Retrieval (VDR) model is a multimodal embedding model based on the Qwen2VL architecture. It transforms both images and text into a shared vector space, allowing for:
+The [Vision-Document Retrieval (VDR) model](https://huggingface.co/llamaindex/vdr-2b-v1) is a multimodal embedding model created by LlamaIndex and based on the Qwen2VL architecture. It transforms both images and text into a shared vector space, allowing for:
 
 - Text-to-image search: Find images that match text descriptions
 - Image-to-image similarity: Find visually similar images
-- Zero-shot classification: Classify images without training
 
 **Specialized for Document Images**: This model excels at working with document images of all kinds, including:
 - Scanned text documents
@@ -25,7 +24,6 @@ This implementation provides a simple way to use VDR within FiftyOne for semanti
 
 - **Text-to-Image Similarity**: Search your images using natural language queries
 - **Customizable Embeddings**: Adjust embedding dimension to balance accuracy and performance
-- **Zero-Shot Classification**: Classify images without additional training
 - **Seamless FiftyOne Integration**: Works with FiftyOne's Brain tools for dataset exploration
 
 ## Installation
@@ -68,8 +66,8 @@ import fiftyone.brain as fob
 # Compute embeddings and build a similarity index
 text_img_index = fob.compute_similarity(
     dataset,                        # Your FiftyOne dataset
-    model="llamaindex/vdr-2b-v1",   # Model name
-    brain_key="vdr_img",            # Key to store the results
+    model="llamaindex/vdr-2b-v1",   # Model name, you can also use the multilingual model, vdr-2b-multi-v1
+    brain_key="vdr_img",            # Key to store the results, can be whatever you want
 )
 ```
 
@@ -77,16 +75,13 @@ text_img_index = fob.compute_similarity(
 
 ```python
 # Sort dataset by similarity to a text query
-similar_samples = text_img_index.sort_by_similarity("3d object detection")
+similar_samples = text_img_index.sort_by_similarity("your awesome text query!")
 
 # Example document-specific queries:
 # similar_samples = text_img_index.sort_by_similarity("invoices from 2023")
 # similar_samples = text_img_index.sort_by_similarity("bar charts showing declining trends")
 # similar_samples = text_img_index.sort_by_similarity("error messages containing API failures")
 
-# View the results
-session = fo.Session(similar_samples)
-session.view = similar_samples
 ```
 
 ### Advanced Usage
@@ -152,7 +147,7 @@ The model computes embeddings by:
 
 ## License
 
-This implementation is provided under the terms of the base model's license (LlamaIndex/VDR-2B-V1).
+This implementation is provided under the terms of the [base model's license (LlamaIndex/VDR-2B-V1), which is Apache 2.0](https://choosealicense.com/licenses/apache-2.0/).
 
 ## Acknowledgements
 
